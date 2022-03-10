@@ -1,0 +1,113 @@
+# ------------ UPGRADES ----------------
+
+    # Upgrade jumpHeight
+    if keys[pygame.K_m] and man.upgradeCooldown == 0:
+        man.upgradeCooldown = 10
+        if man.jumpHeight == man.startJumpHeight + 2:
+            if man.score >= 10:
+                    man.jumpHeight += 0.5
+                    man.score -= 10
+                    if man.jumpCount == man.jumpHeight-0.5:
+                        man.jumpCount = man.jumpHeight
+        elif man.jumpHeight == man.startJumpHeight + 1:
+            if man.score >= 10:
+                man.jumpHeight += 1
+                man.score -= 10
+                if man.jumpCount == man.jumpHeight - 1:
+                    man.jumpCount = man.jumpHeight
+        elif man.jumpHeight == man.startJumpHeight:
+            if man.score >= 5:
+                man.jumpHeight += 1
+                man.score -= 5
+                if man.jumpCount == man.jumpHeight - 1:
+                    man.jumpCount = man.jumpHeight
+    elif man.upgradeCooldown > 0:
+        man.upgradeCooldown -= 1
+
+    # Upgrade vel
+    if keys[pygame.K_n] and man.upgradeCooldown == 0:
+        man.upgradeCooldown = 10
+        if man.vel == man.startVel + 4:
+            if man.score >= 10:
+                    man.vel += 2
+                    man.score -= 10
+        elif man.vel == man.startVel + 2:
+            if man.score >= 10:
+                    man.vel += 2
+                    man.score -= 10
+        elif man.vel == man.startVel:
+            if man.score >= 5:
+                    man.vel += 2
+                    man.score -= 5
+
+# -------------- UPGRADES ---------------
+
+    # Upgrade jumpHeight
+    if keys[pygame.K_1] and man2.upgradeCooldown == 0:
+        man2.upgradeCooldown = 10
+        if man2.jumpHeight == man2.startJumpHeight + 2:
+            if man2.score >= 10:
+                    man2.jumpHeight += 0.5
+                    man2.score -= 10
+        elif man2.jumpHeight == man2.startJumpHeight + 1:
+            if man2.score >= 10:
+                man2.jumpHeight += 1
+                man2.score -= 10
+        elif man2.jumpHeight == man2.startJumpHeight:
+            if man2.score >= 5:
+                man2.jumpHeight += 1
+                man2.score -= 5
+    elif man2.upgradeCooldown > 0:
+        man2.upgradeCooldown -= 1
+
+    # Upgrade vel
+    if keys[pygame.K_2] and man2.upgradeCooldown == 0:
+        man2.upgradeCooldown = 10
+        if man2.vel == man2.startVel + 4:
+            if man2.score >= 10:
+                        man2.vel += 2
+                        man2.score -= 10
+        elif man2.vel == man2.startVel + 2:
+            if man2.score >= 10:
+                        man2.vel += 2
+                        man2.score -= 10
+        elif man2.vel == man2.startVel:
+            if man2.score >= 5:
+                        man2.vel += 2
+                        man2.score -= 5
+
+
+#------------------ BULLETS ------------------------------
+    for bullet in bullets:
+        #for p in players:
+        if checkInBox((bullet.x, bullet.y), man2.hitbox):
+            bullets.pop(bullets.index(bullet))
+            print('Player 2 is hit')
+            man.score += 1
+
+        if bullet.x > 0 and bullet.x < screenWidth:
+            bullet.x += bullet.vel
+        else:
+            bullets.pop(bullets.index(bullet))
+    for bullet in bullets2:
+        if checkInBox((bullet.x, bullet.y), man.hitbox):
+            bullets2.pop(bullets2.index(bullet))
+            print('Player 1 is hit')
+            man2.score += 1
+        if bullet.x > 0 and bullet.x < screenWidth:
+            bullet.x += bullet.vel
+        else:
+            bullets2.pop(bullets2.index(bullet))
+
+
+man.draw(win)
+    man2.draw(win)
+    enemy1.draw(win)
+    if man.isLaser:
+        man.drawLaser(win)
+    if man2.isLaser:
+        man2.drawLaser(win)
+    for bullet in bullets[0]:
+        bullet.draw(win)
+    for bullet in bullets[1]:
+        bullet.draw(win)
