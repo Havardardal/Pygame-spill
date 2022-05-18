@@ -1,5 +1,6 @@
 import pygame
 import numpy as np
+import random
 pygame.init()
 screenHeight = 640
 screenWidth = 1270
@@ -14,6 +15,8 @@ walkRight2 = [pygame.image.load('Bilder/H0-2.png'), pygame.image.load('Bilder/H1
 walkLeft2 = [pygame.image.load('Bilder/V0-2.png'), pygame.image.load('Bilder/V1-2.png'), pygame.image.load('Bilder/V0-2.png'), pygame.image.load('Bilder/V2-2.png')]
 lives = [pygame.image.load('Bilder/P1_head.png'), pygame.image.load('Bilder/P2_head.png')]
 enemyHav = [[pygame.image.load('Bilder/enemy1L.png'), pygame.image.load('Bilder/enemy1L2.png'),pygame.image.load('Bilder/enemy1L3.png'),pygame.image.load('Bilder/enemy1L4.png')], [pygame.image.load('Bilder/enemy1R.png'), pygame.image.load('Bilder/enemy1R2.png'), pygame.image.load('Bilder/enemy1R3.png'), pygame.image.load('Bilder/enemy1R4.png')]]
+enemyBulletImg = [pygame.image.load('Bilder/enemyProjectile1.png'), pygame.image.load('Bilder/enemyProjectile2.png')]
+menuTabs = [pygame.image.load('Bilder/menu2.png')]
 bg = pygame.image.load('Bilder/bgplanet2.png')
 
 clock = pygame.time.Clock()
@@ -21,7 +24,7 @@ clock = pygame.time.Clock()
 #Sounds and music
 gat = pygame.mixer.Sound("Sounds/gat.wav")
 hit = pygame.mixer.Sound("Sounds/Ooh.wav")
-music = ["Music/Heinesang.wav", "Music/Hakensang.wav"]
+music = ["Music/Heinesang.wav", "Music/Hakensang.wav", "Music/STAR WARS EPIC.wav"]
 pygame.mixer.music.load(music[0])
 pygame.mixer.music.play(-1)
 
@@ -53,7 +56,7 @@ class player(object):
         self.laserTime = self.startLaserTime
         self.isLaser = False
         self.portalCount = 0        #Portal cooldown
-        self.hitbox = (self.x + 20, self.y, 20, 60) #Hitbox
+        self.hitbox = (self.x + 20, self.y + 5, 20, 60) #Hitbox
         self.score = 50             #Score (not in use)
         self.health = 100           #Healthbar (not in use)
         self.lives = 5
@@ -245,8 +248,8 @@ class player(object):
                 win.blit(lives[1], (screenWidth-200+i*25, 70))
 
         #Update hitbox
-        self.hitbox = (self.x + 20, self.y + 13, 20, 50)
-        #pygame.draw.rect(win, (255, 0, 0), self.hitbox, 2)
+        self.hitbox = (self.x + 20, self.y+5, 20, 60)
+        pygame.draw.rect(win, (255, 0, 0), self.hitbox, 2)
 
 
 
@@ -318,7 +321,7 @@ portals.append(portal(350, 236 - 1, 40, 64, 2))
 
 # ---------------------------- ENEMY OBJECT --------------------------------
 
-class enemy(object):
+class enemyObject(object):
     walkLeft = enemyHav[0]
     walkRight = enemyHav[1]
     def __init__(self, x, y, width, height, end):
@@ -326,23 +329,74 @@ class enemy(object):
         self.y = y
         self.width = width
         self.height = height
-        self.end = end
-        self.path = [self.x, self.x + self.end]
+        self.path = [self.x, self.x + end]
         self.walkCount = 0
-        self.vel = 1
+        self.vel = 2.2
         self.hitbox = (self.x, self.y, width, height)
         self.fullHealth = 100
         self.health = self.fullHealth
         self.healthBarScale = 2
         self.fullHealthBar = (screenWidth//2-self.fullHealth*self.healthBarScale//2, 40, self.fullHealth*self.healthBarScale, 40)
         self.level = 0
+        #Bevegelsesmønster
+        self.lastPlayerShot = 0
+        self.nearestPlayer = [self.vel, 0]
+        #Kode som trengs for å generere prosjektiler. Legger inn litt tilfeldige movements.
+        self.attackProbability = 0.00           #Prob of attack at a certain timestep
+        self.attackCheck = 20                   #Number of timesteps between each prob check and prob increase.
+        self.attackProbabilityIncrease = 0.1
+        self.randomAttackNumber = random.uniform(0, 1)  #Variable for random attack check
+        self.attack = False                     #Is attacking?
+        self.attackCounter = 0
+        self.attackSpeed = 10                   #Timesteps between projectiles
+        self.startAttackDuration = 120          #Duration of attack
+        self.attackDuration = 0
 
-    def levelUp(self):
+    def levelUp(self): #Level of enemy. Enemy is gradually becoming stronger.
         #Check if healthbar has sunk under 75%, 50% or 25%.
         if (self.health <= self.fullHealth * (3-self.level)/4):
             self.level += 1
+            self.attackProbabilityIncrease += 0.01
             #Her må det legges inn en level-up animasjon
 
+    def checkEnemyAttack(self): #Calculate probability for attack. Initiate attack and reset variables if enemy is attacking.
+        self.attackCounter += 1
+        if self.attackCounter % self.attackCheck == 0 and not self.attack:
+            self.attackProbability += self.attackProbabilityIncrease
+            if self.attackProbability > self.randomAttackNumber:
+                self.attack = True
+                self.attackDuration = self.startAttackDuration
+                self.attackProbability = 0.00
+                self.randomAttackNumber = random.uniform(0,1)
+                self.attackCounter = 0
+
+        if self.attack:
+            self.attackDuration -= 1
+            self.createEnemyProjectile()
+            if self.attackDuration < 0:
+                self.attack = False
+
+
+    def createEnemyProjectile(self):
+        if self.level == 0:
+            if not self.attackCounter % self.attackSpeed:
+                self.enemyProjectile1()
+        if self.level == 1:
+            if not self.attackCounter % self.attackSpeed:
+                self.enemyProjectile1()
+            a = 1#Skriv kode her
+        if self.level == 2:
+            if not self.attackCounter % self.attackSpeed:
+                self.enemyProjectile1()
+            a = 2#Skriv kode her
+        if self.level == 3:
+            if not self.attackCounter % self.attackSpeed:
+                self.enemyProjectile1()
+            a = 3#Skriv kode her
+
+    def enemyProjectile1(self):
+        randAngle = random.uniform(0, 1)*3600
+        enemyBullets.append(projectile(self.x + self.width//2, self.y + self.height//2, 5, 3, vel = 4, angle = randAngle))
 
     def draw(self, win):
         self.move()
@@ -358,18 +412,35 @@ class enemy(object):
         pygame.draw.rect(win, (0, 0, 0), self.fullHealthBar, 2)
 
     def move(self):
-        if self.vel > 0:
-            if self.x + self.vel < self.path[1]:
-                self.x += self.vel
+        #Slette denne if-en?
+        if self.level == -1:
+            if self.vel > 0:
+                if self.x + self.vel < self.path[1]:
+                    self.x += self.vel
+                else:
+                    self.vel = self.vel*(-1)
+                    self.walkCount = 0
             else:
-                self.vel = self.vel*(-1)
-                self.walkCount = 0
+                if self.x + self.vel > self.path[0]:
+                   self.x += self.vel
+                else:
+                    self.vel = self.vel*(-1)
+                    self.walkCount = 0
         else:
-            if self.x + self.vel > self.path[0]:
-                self.x += self.vel
-            else:
-                self.vel = self.vel*(-1)
-                self.walkCount = 0
+            self.findVecToClosestPlayer()
+            self.x += self.nearestPlayer[0]
+            self.y += self.nearestPlayer[1]
+
+
+    def findVecToClosestPlayer(self):
+        distances = []
+        for p in players:
+            distances.append(np.sqrt((self.x - p.x) ** 2 + (self.y - p.y) ** 2))
+        distances = np.array(distances)
+        if distances[self.lastPlayerShot] < 60:
+            self.nearestPlayer = [0,0]
+        else:
+            self.nearestPlayer = [np.round((players[self.lastPlayerShot].x - self.x) * self.vel / distances[self.lastPlayerShot]), np.round((players[self.lastPlayerShot].y - self.y) * self.vel / distances[self.lastPlayerShot])]
 
 
 # ----------- OBJECT PROJECTILE ------------------------
@@ -377,25 +448,32 @@ class enemy(object):
 class projectile(object):
     blueBullet = pygame.image.load('Bilder/blueBullet.png')
     redBullet = pygame.image.load('Bilder/redBullet.png')
-    def __init__(self, x, y, radius, player, facing, vel = 15, angle = 0):
+    def __init__(self, x, y, radius, player, facing = 0, vel = 15, angle = 0, bulletType = 0):
         self.x = x
         self.y = y
-        self.radius = radius
-        self.player = player
+        self.radius = radius    #Radius på prosjektil
+        self.player = player    #Hvilken spiller skyter
         self.facing = facing
         self.vel = vel * facing
-        self.angle = angle
-        self.vec = [int(vel*np.cos(angle*np.pi/180)), int(vel*np.sin(angle*np.pi/180))]
+        #Nedenfor er eksklusivt for enemy
+        self.angle = angle      #Vinkel prosjektil skal skytes ut
+        self.vec = [int(vel*np.cos(angle*np.pi/180)), int(vel*np.sin(angle*np.pi/180))] #Vektor for bevegelse per tidssteg
+        self.enemyBulletType = bulletType
 
     def moveProjectile(self):
         self.x += self.vec[0]
         self.y += self.vec[1]
 
+
     def draw(self, win):
         if self.player == 1:
             win.blit(self.blueBullet, (self.x, self.y))
-        else:
+        elif self.player == 2:
             win.blit(self.redBullet, (self.x, self.y))
+        elif self.player == 3:
+            self.moveProjectile()
+            win.blit(enemyBulletImg[self.enemyBulletType], (self.x, self.y))
+
         # pygame.draw.circle(win, self.color, (self.x, self.y), self.radius)
 
 # --------------- POWER UPS ------------------------
@@ -417,30 +495,37 @@ def checkInBox(position, box): # Coordinates: (x, y) and (x, y, length, height)
             inBox = True
     return inBox
 
+def checkInScreen(position):
+    return checkInBox(position, (0, 0, screenWidth, screenHeight))
+
 # ------------------ BULLET CHECK -------------------
 
+#Denne kan jeg skrive om slik at spilelre ikke kan treffe hverandre, og for å se om enemy treffer spillere.
 def checkBullets():
     #Loop through all bullets
     for el in bullets:
         for bullet in el:
-            #check if player is hit
-            for guy in players:
-                if checkInBox((bullet.x, bullet.y), guy.hitbox):
-                    el.pop(el.index(bullet))
-                    #hit.play()
-                    guy.lives -= 1
             #check if enemy is hit
             if checkInBox((bullet.x, bullet.y), enemy1.hitbox):
                 el.pop(el.index(bullet))
                 enemy1.health -= 1
+                enemy1.lastPlayerShot = bullet.player-1
                 #Sjekker om enemy ikke er maks level 
                 if enemy1.level < 3:
                     enemy1.levelUp()
             #bullet movement
-            if bullet.x > 0 and bullet.x < screenWidth:
-                bullet.x += bullet.vel
-            else:
-                el.pop(el.index(bullet))
+            if bullet.x > 0 and bullet.x < screenWidth: bullet.x += bullet.vel
+            else: el.pop(el.index(bullet))
+
+    #Loop through enemy bullets.
+    for bullet in enemyBullets:
+        if checkInScreen((bullet.x, bullet.y)): bullet.moveProjectile()
+        else: enemyBullets.pop(enemyBullets.index(bullet))
+        # check if player is hit
+        for guy in players:
+            if checkInBox((bullet.x, bullet.y), guy.hitbox):
+                enemyBullets.pop(enemyBullets.index(bullet))
+                guy.lives -= 1
 
 
 # ---------------- GAME MENU -------------------------
@@ -482,13 +567,11 @@ def redrawGameWindow():
         plat.drawrect(win)
     for port in portals:
         port.drawPortal(win)
-    #P1 = font.render('PLAYER ONE: ' + str(man.score*10), 1, (0, 0, 0))
-    #P2 = font.render('PLAYER TWO: ' + str(man2.score * 10), 1, (0, 0, 0))
-    #win.blit(P1, (50, 50))
-    #win.blit(P2, (850, 50))
 
     #Draw enemy and players
     enemy1.draw(win)
+    for bullet in enemyBullets:
+        bullet.draw(win)
     for p in players:
         p.draw(win)
         if p.isLaser:
@@ -497,17 +580,19 @@ def redrawGameWindow():
             for bullet in b:
                 bullet.draw(win)
 
+
     pygame.display.update()
 
 def redrawMenuWindow(noPlayers):
     win.blit(bg, (0, 0))
     play = font.render('PRESS ENTER TO START', True, (0, 0, 0))
     players = font.render(str(noPlayers) + ' Player mode', True, (0,0,0))
-    win.blit(walkLeft[0], (screenWidth/3 + 120, screenHeight/2 - 64))
+    win.blit(walkLeft[0], (screenWidth//3 + 120, screenHeight//2 - 64))
     if noPlayers == 2:
         win.blit(walkRight2[0], (screenWidth/3 + 160, screenHeight/2 - 64))
-    win.blit(play, (int(screenWidth/3 ), int(screenHeight/2)))
-    win.blit(players, (int(screenWidth/3 + 80), int(screenHeight/2)-120))
+    win.blit(play, (screenWidth//3 , screenHeight//2))
+    win.blit(players, (screenWidth//3 + 80, screenHeight//2-120))
+    win.blit(menuTabs[0], (screenWidth//2-170, screenHeight-240))
     pygame.display.update()
 
 # ---------------------------------------------------------
@@ -518,8 +603,9 @@ font = pygame.font.SysFont('comicsans', 30, False)
 players = []
 man = player(900, screenHeight-190, 64, 64, 1)
 players.append(man)
-enemy1 = enemy(300, screenHeight-400, 20, 64, 200)
+enemy1 = enemyObject(screenWidth//2, screenHeight//4, 20, 64, 200)
 bullets = [[]]
+enemyBullets = []
 run = True
 rin1 = True
 # --------- Start menu --------------
@@ -528,10 +614,6 @@ if (noPlayers == 2):
     man2 = player(200, screenHeight - 190, 64, 64, 2)
     players.append(man2)
     bullets.append([])
-#else:
-    #man2 = player(200, screenHeight - 190, 64, 64, 2)
-    #players.append(man2)
-    #bullets.append([])
 
 # --------- Main loop --------------
 while run:
@@ -543,6 +625,7 @@ while run:
 
     # ------------ BULLETS -----------------
     checkBullets()
+    enemy1.checkEnemyAttack()
 
     # ------------- KEYS -------------------
     keys = pygame.key.get_pressed()
