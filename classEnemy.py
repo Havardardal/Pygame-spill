@@ -2,7 +2,7 @@ import pygame
 import random
 import numpy as np
 from classProjectile import Projectile
-from nyttigeFunksjoner import randomMovement, findLengthOfVector
+from nyttigeFunksjoner import randomMovement, findLengthOfVector, shortenVector
 import vars
 
 class Enemy(object):
@@ -66,8 +66,8 @@ class Enemy(object):
 
     def createEnemyProjectile(self, enemyBullets):
         if self.level == 0:
-            if not self.attackCounter % self.attackSpeed:
-                self.enemyProjectile1(enemyBullets)
+            if not self.attackCounter % self.attackSpeed and self.attackDuration % 4:
+                self.enemyProjectile3(enemyBullets)
         if self.level == 1:
             if not self.attackCounter % self.attackSpeed:
                 self.enemyProjectile1(enemyBullets)
@@ -82,8 +82,18 @@ class Enemy(object):
             a = 3#Skriv kode her
 
     def enemyProjectile1(self, enemyBullets):
-        randAngle = random.uniform(0, 1)*3600
+        randAngle = random.uniform(0, 1)*360                                              
         enemyBullets.append(Projectile(self.x + self.width*3, self.y + self.height//4, 5, 3, vel = 4, angle = randAngle))
+
+    def enemyProjectile2(self, enemyBullets):
+        a = self.attackDuration/self.startAttackDuration*360                            
+        enemyBullets.append(Projectile(self.x + self.width*3, self.y + self.height//4, 5, 3, vel = 4, angle = a))
+
+    def enemyProjectile3(self, enemyBullets):
+        for i in range(10):
+            a = i/10*360
+            enemyBullets.append(Projectile(self.x + self.width*3, self.y + self.height//4, 5, 3, vel = 4, angle = a))
+
 
     def draw(self, win, players):
         self.move(players)
@@ -99,7 +109,6 @@ class Enemy(object):
         pygame.draw.rect(win, (0, 0, 0), self.fullHealthBar, 2)
 
     def move(self, players):
-        
         if self.level == 0:
             self.findVecToClosestPlayer(players)
             self.updateAccVector()
@@ -123,23 +132,12 @@ class Enemy(object):
             self.nearestPlayer = [((players[self.lastPlayerShot].x - self.x) / distances[self.lastPlayerShot]), ((players[self.lastPlayerShot].y - self.y) / distances[self.lastPlayerShot])]
     
     def updateAccVector(self):
-        #Dette fungerer ikke helt supert enda. Hvordan kan man regulere maks hastighet? Legge til acc og se om det gå over maks?'
         self.accVector[0] = self.nearestPlayer[0]*0.1
         self.accVector[1] = self.nearestPlayer[1]*0.1
-        if findLengthOfVector([self.velVec[0] + self.accVector[0], self.velVec[1] + self.accVector[1]]) > self.maxVel:
-            self.accVector = [0,0]
-        """"
-        if self.vel < 0.5*self.maxVel:
-            self.accVector[0] = self.nearestPlayer[0]*0.1
-            self.accVector[1] = self.nearestPlayer[1]*0.1
-        elif self.vel < self.maxVel:
-            self.accVector[0] = self.nearestPlayer[0]*0.05
-            self.accVector[1] = self.nearestPlayer[1]*0.05
-        else: 
-            self.accVector[0] = self.nearestPlayer[0]*0.05
-            self.accVector[1] = self.nearestPlayer[1]*0.05 """
+        
 
     def updateVelVector(self):
         self.velVec[0] += self.accVector[0]
         self.velVec[1] += self.accVector[1]
+        self.velVec = shortenVector(self.velVec, self.maxVel)
         self.vel = findLengthOfVector(self.velVec)
