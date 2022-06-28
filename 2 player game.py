@@ -23,9 +23,9 @@ def main():
     pygame.display.set_caption("Two player game")
 
     #Sounds and music
-    pygame.mixer.music.load("Music/" +  vars.music[0])
+    pygame.mixer.music.load("Music/" +  vars.music[0])  
     pygame.mixer.music.play(-1)
-
+                                                                                                                    
     # build world
     platforms = setPlatforms()
     portals = setPortals()

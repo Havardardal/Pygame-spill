@@ -57,6 +57,12 @@ def checkBullets(bullets, enemy, enemyBullets, players):
                 enemyBullets.pop(enemyBullets.index(bullet))
                 guy.lives -= 1
 
+#Funksjon som forkorter en vektor til en maks lengde.
+def shortenVector(vector, maxLength):
+    l = findLengthOfVector(vector)
+    if l > maxLength:
+        vector = [vector[0]/l*maxLength, vector[1]/l*maxLength] # Endre denne. Arccos returnerer radianer? 
+    return vector
 
 
 

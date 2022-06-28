@@ -14,7 +14,7 @@ class Projectile(object):
         self.vel = vel * facing
         #Nedenfor er eksklusivt for enemy
         self.angle = angle      #Vinkel prosjektil skal skytes ut
-        self.vec = [int(vel*np.cos(angle*np.pi/180)), int(vel*np.sin(angle*np.pi/180))] #Vektor for bevegelse per tidssteg
+        self.vec = [vel*np.cos(angle*np.pi/180), vel*np.sin(angle*np.pi/180)] #Vektor for bevegelse per tidssteg
         self.enemyBulletType = bulletType
 
     def moveProjectile(self):
