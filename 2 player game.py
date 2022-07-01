@@ -7,7 +7,7 @@ from classPortal import Portal
 from classEnemy import Enemy
 from classProjectile import Projectile
 from nyttigeFunksjoner import checkBullets, checkInBox, checkInScreen
-from setWorld import setPlatforms, setPortals
+from setWorld import setWorld
 from gameWindow import redrawGameWindow, startMenu, redrawMenuWindow
 #import objectContainer
 
@@ -27,8 +27,7 @@ def main():
     pygame.mixer.music.play(-1)
                                                                                                                     
     # build world
-    platforms = setPlatforms()
-    portals = setPortals()
+    platforms, portals = setWorld(1)
     players = []
     man = Player(900, vars.screenHeight-190, 64, 64, 1)
     players.append(man)
@@ -43,7 +42,6 @@ def main():
         man2 = Player(200, vars.screenHeight - 190, 64, 64, 2)
         players.append(man2)
         bullets.append([])
-
     # --------- Main loop --------------
     while run:
         vars.clock.tick(60)
