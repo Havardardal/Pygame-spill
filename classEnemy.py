@@ -15,7 +15,7 @@ class Enemy(object):
         self.height = height
         self.path = [self.x, self.x + end]
         self.walkCount = 0
-        self.maxVel = 3
+        self.maxVel = 1.5
         self.accVector = [0,0]
         self.velVec = [0,0]
         self.vel = findLengthOfVector(self.velVec)
@@ -66,7 +66,7 @@ class Enemy(object):
 
     def createEnemyProjectile(self, enemyBullets):
         if self.level == 0:
-            if not self.attackCounter % self.attackSpeed and self.attackDuration % 4:
+            if not self.attackCounter % self.attackSpeed:
                 self.enemyProjectile3(enemyBullets)
         if self.level == 1:
             if not self.attackCounter % self.attackSpeed:
@@ -74,7 +74,7 @@ class Enemy(object):
             a = 1#Skriv kode her
         if self.level == 2:
             if not self.attackCounter % self.attackSpeed:
-                self.enemyProjectile1(enemyBullets)
+                self.enemyProjectile3(enemyBullets)
             a = 2#Skriv kode her
         if self.level == 3:
             if not self.attackCounter % self.attackSpeed:
@@ -110,7 +110,7 @@ class Enemy(object):
 
     def move(self, players):
         if self.level == 0:
-            self.findVecToClosestPlayer(players)
+            self.findVecToClosestPlayer(players) 
             self.updateAccVector()
             self.updateVelVector()
             self.x += self.velVec[0]

@@ -14,16 +14,24 @@ class Player(object):
         self.width = width          #Size of hitbox
         self.height = height
         self.player = player        #Player 1 or 2
+        # Movement
         self.startVel = 5           #Velocity
         self.vel = self.startVel
         self.isJump = True          #Jumping
         self.startJumpVel = -20
         self.gravity = 1
         self.jumpVel = 0
+        self.maxJumpVel = -self.startJumpVel
+        self.jetpackFuel = 10000    #Jetpack
+        self.jetpackActive = False
+        self.jetpackJump = False 
+        self.jetpackAirTime = 0
+        self.maxJetpackAirTime = 60*2
         self.left = False           #Positioning
         self.right = False
         self.walkCount = 0
         self.standing = False
+        # Shooting
         self.reload = 0             #Gun
         self.reloadSpeed = 5
         self.upgradeCooldown = 0    #Upgrade (not in use)
@@ -31,6 +39,7 @@ class Player(object):
         self.startLaserTime = 20
         self.laserTime = self.startLaserTime
         self.isLaser = False
+        # Other
         self.portalCount = 0        #Portal cooldown
         self.hitbox = (self.x + 20, self.y + 5, 20, 60) #Hitbox
         self.score = 50             #Score (not in use)
@@ -61,19 +70,34 @@ class Player(object):
 
         # Calculate physics for player in air
         else:
-            self.jumpVel += self.gravity
-            self.y += self.jumpVel
+            if (self.jetpackJump and keys[pygame.K_UP] and self.jetpackFuel > 0 and self.jetpackAirTime < self.maxJetpackAirTime):
+                self.jetpackActive = True
+                self.jumpVel -= self.gravity/4
+                self.y += self.jumpVel
+                self.jetpackFuel -= 1
+            elif (keys[pygame.K_UP] and self.jumpVel > 0 and self.jetpackFuel > 0 ):
+                self.jetpackActive = True
+                self.jetpackJump = True
+                self.jumpVel -= self.gravity/4
+                self.y += self.jumpVel
+                self.jetpackFuel -= 1
+            else:
+                self.jetpackActive = False
+                if self.jumpVel < self.maxJumpVel:
+                    self.jumpVel += self.gravity
+                self.y += self.jumpVel
 
-            # Check for platforms
-            if self.jumpVel > 0:
-                for p in platforms:
-                    if self.y + self.height - self.jumpVel <= p.y:
-                        if (self.y + self.height > p.y) and (self.y + self.height < p.y + p.height) and (self.x + self.width/2 < p.x + p.length) and (self.x + self.width/2 > p.x):
-                            self.isJump = False
-                            self.y = p.y - self.height
-                            self.jumpVel = 0
-                            p.active[self.player-1] = True
-                            break
+                # Check for platforms
+                if self.jumpVel > 0:
+                    for p in platforms:
+                        if self.y + self.height - self.jumpVel <= p.y:
+                            if (self.y + self.height > p.y) and (self.y + self.height < p.y + p.height) and (self.x + self.width/2 < p.x + p.length) and (self.x + self.width/2 > p.x):
+                                self.isJump = False
+                                self.jetpackActive = False
+                                self.y = p.y - self.height
+                                self.jumpVel = 0
+                                p.active[self.player-1] = True
+                                break
 
 # ------------- GET PRESSED KEYS AND ACTION -------------------
     def pressedKeys(self, keys, bullets, portals):
@@ -223,9 +247,16 @@ class Player(object):
             for i in range(self.lives):
                 win.blit(vars.lives[1], (vars.screenWidth-200+i*25, 70))
 
+        # Draw jetpack
+        if (self.jetpackActive):
+            if (self.left):
+                KODE = 1
+            else:
+                KODE = 2
+
         #Update hitbox
         self.hitbox = (self.x + 20, self.y+5, 20, 60)
-        pygame.draw.rect(win, (255, 0, 0), self.hitbox, 2)
+        #pygame.draw.rect(win, (255, 0, 0), self.hitbox, 2)
 
 
 
