@@ -1,4 +1,5 @@
 import pygame
+import vars
 
 # ------------------- PLATFORMS -------------------------------
 
@@ -11,5 +12,6 @@ class Platform(object):
         # Høyden til hitboxen vil fortsatt være 50, trekker fra 30 her slik at den ser tynnere ut i vinduet.
         self.hitbox = (self.x, self.y, length, height-30)
         self.active = [False, False]
-    def drawrect(self, win):
+
+    def draw(self, win):
         pygame.draw.rect(win, (250, 250, 250), self.hitbox, 2)

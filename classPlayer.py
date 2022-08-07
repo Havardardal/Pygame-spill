@@ -18,15 +18,15 @@ class Player(object):
         self.startVel = 5           #Velocity
         self.vel = self.startVel
         self.isJump = True          #Jumping
-        self.startJumpVel = -20
+        self.startJumpVel = -18
         self.gravity = 1
         self.jumpVel = 0
-        self.maxJumpVel = -self.startJumpVel
-        self.jetpackFuel = 10000    #Jetpack
+        self.maxJumpVel = -self.startJumpVel*3/4
+        self.jetpackFuel = 1000    #Jetpack
         self.jetpackActive = False
         self.jetpackJump = False 
         self.jetpackAirTime = 0
-        self.maxJetpackAirTime = 60*2
+        self.maxJetpackAirTime = 60
         self.left = False           #Positioning
         self.right = False
         self.walkCount = 0
@@ -39,27 +39,41 @@ class Player(object):
         self.startLaserTime = 20
         self.laserTime = self.startLaserTime
         self.isLaser = False
+        # Hit
+        self.hitbox = (self.x + 20, self.y + 5, 20, 60) #Hitbox
+        self.hit = False
+        self.hitCounter = 0
+        self.hitTime = 30
         # Other
         self.portalCount = 0        #Portal cooldown
-        self.hitbox = (self.x + 20, self.y + 5, 20, 60) #Hitbox
         self.score = 50             #Score (not in use)
         self.health = 100           #Healthbar (not in use)
         self.lives = 5
-
+        # Keys
+        if player == 1: 
+            self.keyJump = pygame.K_UP
+            self.keyLookUp = pygame.K_UP
+            self.keyPortal = pygame.K_DOWN
+            self.keyLeft = pygame.K_LEFT
+            self.keyRight = pygame.K_RIGHT
+            self.keyShoot = pygame.K_SPACE
+            self.keyLaser = pygame.K_b
+        if player == 2: 
+            self.keyJump = pygame.K_w
+            self.keyLookUp = pygame.K_w
+            self.keyPortal = pygame.K_s
+            self.keyLeft = pygame.K_a
+            self.keyRight = pygame.K_d
+            self.keyShoot = pygame.K_TAB
+            self.keyLaser = pygame.K_q
 # ------------------- JUMPING AND PLATFORM CHECK -----------
-    def jump(self, keys, platforms):
+    def jump(self, events, keys, platforms):
         # Initiate jump if key is pressed
         if not (self.isJump):
-            if self.player == 1:
-                if keys[pygame.K_UP]:
-                    self.isJump = True
-                    self.walkCount = 0
-                    self.jumpVel = self.startJumpVel
-            else:
-                if keys[pygame.K_w]:
-                    self.isJump = True
-                    self.walkCount = 0
-                    self.jumpVel = self.startJumpVel
+            if keys[self.keyJump]:
+                self.isJump = True
+                self.walkCount = 0
+                self.jumpVel = self.startJumpVel
             # Check if player is leaving the platform
             for p in platforms:
                 if p.active[self.player-1]:
@@ -68,32 +82,36 @@ class Player(object):
                         #self.jumpCount = 0
                         p.active[self.player-1] = False
 
-        # Calculate physics for player in air
+        # Calculate physics for player in air.
+        # Jetpack: Lag en funksjon som dette kan puttes i?
         else:
-            if (self.jetpackJump and keys[pygame.K_UP] and self.jetpackFuel > 0 and self.jetpackAirTime < self.maxJetpackAirTime):
-                self.jetpackActive = True
-                self.jumpVel -= self.gravity/4
-                self.y += self.jumpVel
-                self.jetpackFuel -= 1
-            elif (keys[pygame.K_UP] and self.jumpVel > 0 and self.jetpackFuel > 0 ):
+            if (keys[self.keyJump] and self.jumpVel > -self.startJumpVel/10 and self.jetpackFuel > 0 and not self.jetpackActive):            
                 self.jetpackActive = True
                 self.jetpackJump = True
+                self.jetpackAirTime = 0
                 self.jumpVel -= self.gravity/4
                 self.y += self.jumpVel
-                self.jetpackFuel -= 1
             else:
-                self.jetpackActive = False
-                if self.jumpVel < self.maxJumpVel:
+                if (self.jetpackJump and keys[self.keyJump] and self.jetpackFuel > 0 \
+                    and self.jetpackAirTime < self.maxJetpackAirTime):
+                    self.jetpackActive = True
+                    self.jetpackAirTime += 1
+                    if self.jumpVel > -self.maxJumpVel/4:
+                        self.jumpVel -= self.gravity/4
+                    self.y += self.jumpVel
+                    self.jetpackFuel -= 1
+                elif self.jumpVel < self.maxJumpVel:
                     self.jumpVel += self.gravity
                 self.y += self.jumpVel
 
-                # Check for platforms
+                # Check for platforms 
                 if self.jumpVel > 0:
                     for p in platforms:
-                        if self.y + self.height - self.jumpVel <= p.y:
+                        if self.y + self.height >= p.y:
                             if (self.y + self.height > p.y) and (self.y + self.height < p.y + p.height) and (self.x + self.width/2 < p.x + p.length) and (self.x + self.width/2 > p.x):
                                 self.isJump = False
                                 self.jetpackActive = False
+                                self.jetpackJump = False
                                 self.y = p.y - self.height
                                 self.jumpVel = 0
                                 p.active[self.player-1] = True
@@ -102,108 +120,54 @@ class Player(object):
 # ------------- GET PRESSED KEYS AND ACTION -------------------
     def pressedKeys(self, keys, bullets, portals):
 
-    # ------------------ PLAYER 1 -----------------------------
-        if self.player == 1:
-            if keys[pygame.K_SPACE]:
-                if self.left:
-                    facing = -1
-                else:
-                    facing = 1
-                if self.reload == 0:
-                    if len(bullets[0]) < 5:
-                        bullets[0].append(
-                            Projectile(round(self.x + self.width // 2 + facing*(self.width//2 + self.vel + 1)), round(self.y + self.height // 2), 6, 1, facing))
-                        self.reload = self.reloadSpeed
-                        vars.gat.play()
-            elif self.reload > 0:
-                self.reload -= 1
-
-            if keys[pygame.K_b]:
-                if (self.isLaser == False) and self.laser:
-                    self.isLaser = True
-                    self.laser -= 1
-                    vars.gat.play()
-
-            if keys[pygame.K_DOWN] and self.portalCount == 0:
-                for port in portals:
-                    if checkInBox((self.x + self.width / 2, self.y + self.height / 2),
-                                  (port.x, port.y, port.length, port.height)):
-                        self.x = portals[port.spawnPortal].x - 15
-                        self.y = portals[port.spawnPortal].y
-                        self.jumpCount = 0
-                        self.isJump = True
-                        self.portalCount = 30
-                        break  # for
-            if not self.portalCount == 0:
-                self.portalCount -= 1
-
-            if keys[pygame.K_LEFT]:
-                self.x -= self.vel
-                self.left = True
-                self.right = False
-                self.standing = False
-                self.walkCount += 1
-            elif keys[pygame.K_RIGHT]:
-                self.x += self.vel
-                self.right = True
-                self.left = False
-                self.standing = False
-                self.walkCount += 1
+        if keys[self.keyShoot]:
+            if self.left:
+                facing = -1
             else:
-                self.walkCount = 0
-                self.standing = True
-
-    # ------------------ PLAYER 2 -----------------------------
-        if self.player == 2:
-            if keys[pygame.K_TAB]:
-                if self.left:
-                    facing2 = -1
-                else:
-                    facing2 = 1
-                if self.reload == 0:
-                    if len(bullets[1]) < 5:
-                        bullets[1].append(
-                            Projectile(round(self.x + self.width//2 + facing2*(self.width//2 + self.vel + 1)), round(self.y + self.height // 2), 6, 2,
-                                       facing2))
-                        self.reload = self.reloadSpeed
-                        vars.gat.play()
-            elif self.reload > 0:
-                self.reload -= 1
-
-            if keys[pygame.K_q]:
-                if (self.isLaser == False) and self.laser:
-                    self.isLaser = True
-                    self.laser -= 1
+                facing = 1
+            if self.reload == 0:
+                if len(bullets[self.player-1]) < 5:
+                    bullets[self.player-1].append(
+                        Projectile(round(self.x + self.width // 2 + facing*(self.width//2 + self.vel + 1)), round(self.y + self.height // 2), 6, self.player, facing))
+                    self.reload = self.reloadSpeed
                     vars.gat.play()
+        elif self.reload > 0:
+            self.reload -= 1
 
-            if keys[pygame.K_s] and self.portalCount == 0:
-                for port in portals:
-                    if checkInBox((self.x + self.width / 2, self.y + self.height / 2),
-                                  (port.x, port.y, port.length, port.height)):
-                        self.x = portals[port.spawnPortal].x - 15
-                        self.y = portals[port.spawnPortal].y
-                        self.jumpCount = 0
-                        self.isJump = True
-                        self.portalCount = 10
-                        break  # for
-            if not self.portalCount == 0:
-                self.portalCount -= 1
+        if keys[self.keyLaser]:
+            if (self.isLaser == False) and self.laser:
+                self.isLaser = True
+                self.laser -= 1
+                vars.gat.play()
 
-            if keys[pygame.K_a]:
-                self.x -= self.vel
-                self.left = True
-                self.right = False
-                self.standing = False
-                self.walkCount += 1
-            elif keys[pygame.K_d]:
-                self.x += self.vel
-                self.right = True
-                self.left = False
-                self.standing = False
-                self.walkCount += 1
-            else:
-                self.walkCount = 0
-                self.standing = True
+        if keys[self.keyPortal] and self.portalCount == 0:
+            for port in portals:
+                if checkInBox((self.x + self.width / 2, self.y + self.height / 2),
+                              (port.x, port.y, port.length, port.height)):
+                    self.x = portals[port.spawnPortal].x - 15
+                    self.y = portals[port.spawnPortal].y
+                    self.jumpCount = 0
+                    self.isJump = True
+                    self.portalCount = 30
+                    break  # for
+        if not self.portalCount == 0:
+            self.portalCount -= 1
+
+        if keys[self.keyLeft]:
+            self.x -= self.vel
+            self.left = True
+            self.right = False
+            self.standing = False
+            self.walkCount += 1
+        elif keys[self.keyRight]:
+            self.x += self.vel
+            self.right = True
+            self.left = False
+            self.standing = False
+            self.walkCount += 1
+        else:
+            self.walkCount = 0
+            self.standing = True
 
         # Out of screen check.
         if (self.x < 0 - self.width / 2):
@@ -250,13 +214,20 @@ class Player(object):
         # Draw jetpack
         if (self.jetpackActive):
             if (self.left):
-                KODE = 1
+                win.blit(vars.jetL[0], (self.x, self.y))                
             else:
-                KODE = 2
+                win.blit(vars.jetR[0], (self.x, self.y))    
 
         #Update hitbox
         self.hitbox = (self.x + 20, self.y+5, 20, 60)
         #pygame.draw.rect(win, (255, 0, 0), self.hitbox, 2)
+
+    def hitDraw(self, win):
+        self.hitCounter -= 1
+        if (self.hitCounter <= 0):
+            self.hit = False
+        if (self.hitCounter//2 % 2):
+            self.draw(win)
 
 
 
