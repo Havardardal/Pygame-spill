@@ -37,7 +37,7 @@ def startMenu(music):
 def redrawGameWindow(enemy, bullets, players, enemyBullets, platforms, portals):
     vars.win.blit(vars.bg, (0,0))
     for plat in platforms:
-        plat.drawrect(vars.win)
+        plat.draw(vars.win)
     for port in portals:
         port.drawPortal(vars.win)
 
@@ -46,7 +46,10 @@ def redrawGameWindow(enemy, bullets, players, enemyBullets, platforms, portals):
     for bullet in enemyBullets:
         bullet.draw(vars.win)
     for p in players:
-        p.draw(vars.win)
+        if p.hit: 
+            p.hitDraw(vars.win)
+        else:    
+            p.draw(vars.win)
         if p.isLaser:
             p.drawLaser(vars.win)
         for b in bullets:

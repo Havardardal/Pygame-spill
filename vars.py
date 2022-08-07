@@ -12,6 +12,9 @@ enemyHav = [[pygame.image.load('Bilder/enemy1L.png'), pygame.image.load('Bilder/
 enemyBulletImg = [pygame.image.load('Bilder/enemyProjectile1.png'), pygame.image.load('Bilder/enemyProjectile2.png')]
 menuTabs = [pygame.image.load('Bilder/menu2.png')]
 bg = pygame.image.load('Bilder/bgplanet2.png')
+jetL = [pygame.image.load('Bilder/jet_L1.png'), pygame.image.load('Bilder/jet_L2.png')]
+jetR = [pygame.image.load('Bilder/jet_R1.png'), pygame.image.load('Bilder/jet_R2.png')]
+portal = [pygame.image.load('Bilder/portal.png')]
 
 # Sounds
 gat = pygame.mixer.Sound("Sounds/gat.wav")

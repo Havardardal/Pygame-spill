@@ -27,7 +27,8 @@ def main():
     pygame.mixer.music.play(-1)
                                                                                                                     
     # build world
-    platforms, portals = setWorld(1)
+    #Egentlig burde bullets legges inn i player osv. Jaja. Fikses senere.
+    platforms, portals = setWorld(0)
     players = []
     man = Player(900, vars.screenHeight-190, 64, 64, 1)
     players.append(man)
@@ -43,7 +44,7 @@ def main():
         players.append(man2)
         bullets.append([])
     # --------- Main loop --------------
-    while run:
+    while run:  
         vars.clock.tick(60)
         # ----------- Quit game ----------------
         for event in pygame.event.get():
@@ -55,16 +56,23 @@ def main():
         enemy.checkEnemyAttack(enemyBullets)
 
         # ------------- KEYS -------------------
+        events = pygame.event.get()
         keys = pygame.key.get_pressed()
 
         # ------------ PLAYER ACTIONS -----------
         for player in players:
             player.pressedKeys(keys, bullets, portals)
             # Jump animation
-            player.jump(keys, platforms)
+            player.jump(events, keys, platforms)
 
         # ---------- DRAW WINDOW ----------------
         redrawGameWindow(enemy, bullets, players, enemyBullets, platforms, portals)
+
+        # ---------- LEVELUP ANIMATION -----------
+        if enemy.gainedLevel:
+            enemyBullets = []
+            enemy.levelupAnimation(bullets, players, enemyBullets)
+            platforms, portals = setWorld(enemy.level)
 
     pygame.quit()
 
